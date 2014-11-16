@@ -13,6 +13,7 @@
  *
  * Date: Wed Mar 21 12:46:34 2012 -0700
  */
+// 转入window 提高效率，防止undefined在外部重写。
 (function( window, undefined ) {
 
 // Use the correct document accordingly with window argument (sandbox)
@@ -21,16 +22,18 @@ var document = window.document,
 	location = window.location;
 var jQuery = (function() {
 
-// Define a local copy of jQuery
+// Define a local copy of jQuery 构建对象
 var jQuery = function( selector, context ) {
 		// The jQuery object is actually just the init constructor 'enhanced'
 		return new jQuery.fn.init( selector, context, rootjQuery );
 	},
 
 	// Map over jQuery in case of overwrite
+    //保存jQuery的副本，以便与其它库一起使用时交出jQuery的权限
 	_jQuery = window.jQuery,
 
 	// Map over the $ in case of overwrite
+	//保存$的副本，以便与其它库一起使用时交出$的权限
 	_$ = window.$,
 
 	// A central reference to the root jQuery(document)
@@ -329,6 +332,7 @@ jQuery.extend = jQuery.fn.extend = function() {
 		deep = false;
 
 	// Handle a deep copy situation
+	// 如果第一个参数是boolean型，可能是深度拷贝
 	if ( typeof target === "boolean" ) {
 		deep = target;
 		target = arguments[1] || {};
@@ -337,6 +341,7 @@ jQuery.extend = jQuery.fn.extend = function() {
 	}
 
 	// Handle case when target is a string or something (possible in deep copy)
+	// target不是对象也不是函数，则强制设置为空对象
 	if ( typeof target !== "object" && !jQuery.isFunction(target) ) {
 		target = {};
 	}
@@ -384,13 +389,14 @@ jQuery.extend = jQuery.fn.extend = function() {
 	// Return the modified object
 	return target;
 };
-
+//// 扩展工具函数
 jQuery.extend({
 	noConflict: function( deep ) {
+		// 交出$的控制权
 		if ( window.$ === jQuery ) {
 			window.$ = _$;
 		}
-
+		// 交出jQuery的控制权
 		if ( deep && window.jQuery === jQuery ) {
 			window.jQuery = _jQuery;
 		}
@@ -510,7 +516,7 @@ jQuery.extend({
 			String( obj ) :
 			class2type[ toString.call(obj) ] || "object";
 	},
-
+    //用于判断对象是否是纯粹的对象（通过 {} 或者 new Object 创建的）
 	isPlainObject: function( obj ) {
 		// Must be an Object.
 		// Because of IE, we also have to check the presence of the constructor property.
@@ -599,7 +605,7 @@ jQuery.extend({
 		}
 		return xml;
 	},
-
+    //空函数，可作为一个无操作回调，官方解释http://api.jquery.com/jQuery.noop/
 	noop: function() {},
 
 	// Evaluates a script in a global context
@@ -610,6 +616,7 @@ jQuery.extend({
 			// We use execScript on Internet Explorer
 			// We use an anonymous function so that context is window
 			// rather than jQuery in Firefox
+			//可用if-else让代码更易读，这样更简洁
 			( window.execScript || function( data ) {
 				window[ "eval" ].call( window, data );
 			} )( data );
@@ -9401,4 +9408,4 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
 
 
 
-})( window );
+})( window );//提高效率
